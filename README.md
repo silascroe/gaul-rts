@@ -74,6 +74,8 @@ The setting layer is data-driven. Factions, names, units, resources, and the his
 
 The next major structural choice is whether battles remain standalone scenarios or become part of a lightweight persistent campaign. That decision is intentionally still open.
 
+Development order is not: standalone scenarios come first. The campaign layer, if it exists, should wrap around battles that are already fun and understandable rather than becoming an expensive second game built before the first one works.
+
 ## License
 
 No license has been chosen yet. Until a license is added, do not assume the code or assets are available for reuse beyond the permissions granted by the repository host.
