@@ -1,0 +1,29 @@
+name: Godot smoke tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2
+        run: |
+          curl --fail --location --output godot.zip \
+            https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.7.2-stable_linux.x86_64
+
+      - name: Import and compile project
+        run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --editor --path . --quit
+
+      - name: Test simulation
+        run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script res://tests/simulation_smoke.gd
+
+      - name: Test main scene startup
+        run: ./Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script res://tests/main_scene_smoke.gd

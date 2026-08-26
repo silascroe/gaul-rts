@@ -1,4 +1,4 @@
-# First Videogame
+# GaulRTS
 
 An old-school real-time strategy prototype set in an alternate Iron Age Gaul.
 
@@ -37,7 +37,7 @@ Resource gathering is intentionally abstract: a gatherer works an iron site and 
 
 ## Run locally
 
-Open the project folder in **Godot 4.x** and press **Play**. The project file targets Godot 4.3-compatible settings.
+Open the project folder in **Godot 4.7.2 or newer** and press **Play**.
 
 The project currently has no external art or audio dependencies. The world, units, HUD, and map details are drawn by code so the rules can be tested before an asset pipeline is chosen.
 
@@ -49,7 +49,11 @@ Once Godot is installed, run the extraction-rule smoke test from the project roo
 godot --headless --path . --script res://tests/simulation_smoke.gd
 ~~~
 
-The test checks neutral extraction, enemy control, and reduced output at contested sites.
+The test checks scenario initialization, neutral extraction, enemy control,
+contested output, production, combat victory, and match reset.
+
+The repository also runs both the simulation test and a real main-scene startup
+test automatically on every GitHub push and pull request.
 
 ## Project structure
 
@@ -60,6 +64,7 @@ src/game_data.gd           Scenario, faction, unit, and resource definitions
 src/simulation.gd          Fixed-tick rules and game state
 src/main.gd                Rendering, camera, HUD, and input
 tests/simulation_smoke.gd  Headless check for extraction rules
+tests/main_scene_smoke.gd  Headless check for scene startup and initialized data
 docs/SETTING.md            Current setting and tone
 docs/DECISIONS.md          Confirmed choices and open design questions
 ~~~

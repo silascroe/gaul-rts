@@ -200,6 +200,11 @@ func _unit_label(unit_id: int) -> String:
 
 
 func _draw() -> void:
+	# A dependency compile failure must not turn into a flood of misleading draw
+	# errors. The original parser error remains visible in Godot's Output panel.
+	if simulation == null:
+		return
+
 	var viewport_size := get_viewport_rect().size
 	draw_rect(Rect2(Vector2.ZERO, viewport_size), Color("#090d12"))
 

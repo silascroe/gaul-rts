@@ -266,7 +266,7 @@ func _move_toward(unit: Dictionary, target: Vector2, delta: float) -> void:
 	var distance := position.distance_to(target)
 	if distance <= 0.1:
 		return
-	var step := min(distance, unit["speed"] * delta)
+	var step: float = minf(distance, float(unit["speed"]) * delta)
 	unit["position"] = _clamp_to_map(position + position.direction_to(target) * step)
 
 
@@ -313,7 +313,7 @@ func _update_gather(unit: Dictionary, delta: float) -> void:
 		return
 
 	unit["gather_progress"] = 0.0
-	var amount := min(5.0, resource["amount"])
+	var amount: float = minf(5.0, float(resource["amount"]))
 	resource["amount"] -= amount
 	faction_state[unit["owner"]]["credits"] = faction_state[unit["owner"]]["credits"] + amount
 
