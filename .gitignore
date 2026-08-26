@@ -1,0 +1,6 @@
+.godot/
+.import/
+export/
+.git-meta/
+*.tmp
+*.log
