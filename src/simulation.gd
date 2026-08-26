@@ -21,6 +21,7 @@ var next_resource_id := 1
 var winner := -1
 var ended := false
 var paused := false
+var scenario_id := "broken_oath"
 
 var units: Array = []
 var bases: Array = []
@@ -50,7 +51,7 @@ func _process(delta: float) -> void:
 	state_changed.emit()
 
 
-func reset_match() -> void:
+func reset_match(requested_scenario_id: String = "broken_oath") -> void:
 	accumulator = 0.0
 	elapsed = 0.0
 	ai_timer = 0.0
@@ -60,34 +61,31 @@ func reset_match() -> void:
 	winner = -1
 	ended = false
 	paused = false
+	scenario = DATA_SCRIPT.scenario(requested_scenario_id)
+	scenario_id = scenario["id"]
 	units.clear()
 	bases.clear()
 	resources.clear()
-	scenario = DATA_SCRIPT.scenario()
 	faction_state = DATA_SCRIPT.faction_definitions()
 	unit_definitions = DATA_SCRIPT.unit_definitions()
 	resource_definition = DATA_SCRIPT.resource_definition()
 	for owner in faction_state:
-		faction_state[owner]["credits"] = 120.0
+		faction_state[owner]["credits"] = scenario["starting_credits"]
 
-	_spawn_resource(Vector2(520, 340), 1400.0)
-	_spawn_resource(Vector2(820, 850), 1400.0)
-	_spawn_resource(Vector2(1120, 480), 1400.0)
-	_spawn_resource(Vector2(1420, 900), 1400.0)
-	_spawn_resource(Vector2(1720, 360), 1400.0)
-	_spawn_resource(Vector2(1880, 1040), 1400.0)
+	for resource_definition_entry in scenario["resources"]:
+		_spawn_resource(resource_definition_entry["position"], resource_definition_entry["amount"])
 
-	var player_base_id := _spawn_base(PLAYER, Vector2(260, MAP_SIZE.y * 0.5))
-	var enemy_base_id := _spawn_base(ENEMY, Vector2(MAP_SIZE.x - 260, MAP_SIZE.y * 0.5))
+	var player_base_id := -1
+	var enemy_base_id := -1
+	for base_definition in scenario["bases"]:
+		var base_id := _spawn_base(base_definition["owner"], base_definition["position"])
+		if base_definition["owner"] == PLAYER:
+			player_base_id = base_id
+		else:
+			enemy_base_id = base_id
 
-	for index in range(3):
-		_spawn_unit(PLAYER, "worker", Vector2(350, 500 + index * 62))
-		_spawn_unit(ENEMY, "worker", Vector2(MAP_SIZE.x - 350, 500 + index * 62))
-
-	_spawn_unit(PLAYER, "soldier", Vector2(390, MAP_SIZE.y * 0.5 - 85))
-	_spawn_unit(PLAYER, "soldier", Vector2(390, MAP_SIZE.y * 0.5 + 85))
-	_spawn_unit(ENEMY, "soldier", Vector2(MAP_SIZE.x - 390, MAP_SIZE.y * 0.5 - 85))
-	_spawn_unit(ENEMY, "soldier", Vector2(MAP_SIZE.x - 390, MAP_SIZE.y * 0.5 + 85))
+	for unit_definition_entry in scenario["starting_units"]:
+		_spawn_unit(unit_definition_entry["owner"], unit_definition_entry["kind"], unit_definition_entry["position"])
 
 	# Keep the identifiers referenced so the setup is obvious while this grows.
 	assert(player_base_id > 0)
