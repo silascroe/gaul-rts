@@ -31,6 +31,10 @@ The first simulation is intentionally small enough to reason about while still p
 
 Workers extract iron at the site instead of carrying it back to the hillfort. This keeps the economy readable and puts the interesting decision on the map: which sites can be held, defended, or raided? Enemy spearmen stop extraction when they have uncontested military presence at a site; both sides present means reduced output.
 
+### Standalone scenarios before campaign
+
+The first development phase uses self-contained battles. A later campaign-lite war map may connect them through territory, alliances, resources, and consequences, but it will not be built until the battlefield layer is working on its own.
+
 ### Pausable battlefield
 
 The simulation is real-time by default but can be paused with Space. This keeps the first prototype approachable while preserving the real-time decision-making we want to learn.
