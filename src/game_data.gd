@@ -5,43 +5,78 @@ extends RefCounted
 ## hard-coded names and numbers as the project grows.
 
 
-static func scenario() -> Dictionary:
+static func scenarios() -> Dictionary:
 	return {
-		"title": "THE BROKEN OATH",
-		"region": "The Sable Vale",
-		"subtitle": "A border war in an alternate Iron Age Gaul",
-		"objective": "Break the Flint Crown's hillfort.",
-		"river_points": PackedVector2Array([
-			Vector2(1110, -60),
-			Vector2(960, 210),
-			Vector2(1180, 470),
-			Vector2(1030, 740),
-			Vector2(1290, 1000),
-			Vector2(1120, 1360),
-		]),
-		"roads": [
-			PackedVector2Array([
-				Vector2(260, 650),
-				Vector2(650, 650),
-				Vector2(1060, 690),
-				Vector2(1560, 650),
-				Vector2(1940, 650),
+		"broken_oath": {
+			"id": "broken_oath",
+			"title": "THE BROKEN OATH",
+			"region": "The Sable Vale",
+			"subtitle": "A border war in an alternate Iron Age Gaul",
+			"objective": "Break the Flint Crown's hillfort.",
+			"starting_credits": 120.0,
+			"river_points": PackedVector2Array([
+				Vector2(1110, -60),
+				Vector2(960, 210),
+				Vector2(1180, 470),
+				Vector2(1030, 740),
+				Vector2(1290, 1000),
+				Vector2(1120, 1360),
 			]),
-			PackedVector2Array([
-				Vector2(780, 850),
-				Vector2(1060, 690),
-				Vector2(1420, 900),
-			]),
-		],
-		"standing_stones": [
-			Vector2(990, 360),
-			Vector2(1260, 930),
-		],
-		"groves": [
-			{"position": Vector2(430, 255), "radius": 92.0},
-			{"position": Vector2(1770, 1060), "radius": 104.0},
-		],
+			"roads": [
+				PackedVector2Array([
+					Vector2(260, 650),
+					Vector2(650, 650),
+					Vector2(1060, 690),
+					Vector2(1560, 650),
+					Vector2(1940, 650),
+				]),
+				PackedVector2Array([
+					Vector2(780, 850),
+					Vector2(1060, 690),
+					Vector2(1420, 900),
+				]),
+			],
+			"standing_stones": [
+				Vector2(990, 360),
+				Vector2(1260, 930),
+			],
+			"groves": [
+				{"position": Vector2(430, 255), "radius": 92.0},
+				{"position": Vector2(1770, 1060), "radius": 104.0},
+			],
+			"resources": [
+				{"position": Vector2(520, 340), "amount": 1400.0},
+				{"position": Vector2(820, 850), "amount": 1400.0},
+				{"position": Vector2(1120, 480), "amount": 1400.0},
+				{"position": Vector2(1420, 900), "amount": 1400.0},
+				{"position": Vector2(1720, 360), "amount": 1400.0},
+				{"position": Vector2(1880, 1040), "amount": 1400.0},
+			],
+			"bases": [
+				{"owner": 0, "position": Vector2(260, 650)},
+				{"owner": 1, "position": Vector2(1940, 650)},
+			],
+			"starting_units": [
+				{"owner": 0, "kind": "worker", "position": Vector2(350, 500)},
+				{"owner": 1, "kind": "worker", "position": Vector2(1850, 500)},
+				{"owner": 0, "kind": "worker", "position": Vector2(350, 562)},
+				{"owner": 1, "kind": "worker", "position": Vector2(1850, 562)},
+				{"owner": 0, "kind": "worker", "position": Vector2(350, 624)},
+				{"owner": 1, "kind": "worker", "position": Vector2(1850, 624)},
+				{"owner": 0, "kind": "soldier", "position": Vector2(390, 565)},
+				{"owner": 0, "kind": "soldier", "position": Vector2(390, 735)},
+				{"owner": 1, "kind": "soldier", "position": Vector2(1810, 565)},
+				{"owner": 1, "kind": "soldier", "position": Vector2(1810, 735)},
+			],
+		},
 	}
+
+
+static func scenario(scenario_id: String = "broken_oath") -> Dictionary:
+	var definitions := scenarios()
+	if definitions.has(scenario_id):
+		return definitions[scenario_id]
+	return definitions["broken_oath"]
 
 
 static func faction_definitions() -> Dictionary:
