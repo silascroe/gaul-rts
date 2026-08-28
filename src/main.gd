@@ -5,6 +5,15 @@ extends Node2D
 ## a different camera, UI, or even a headless AI test runner.
 
 const SIMULATION_SCRIPT := preload("res://src/simulation.gd")
+const GROUND_TEXTURE: Texture2D = preload("res://assets/terrain/ground_tile.png")
+const WATER_TEXTURE: Texture2D = preload("res://assets/terrain/water_tile.png")
+const ROAD_TEXTURE: Texture2D = preload("res://assets/terrain/road_tile.png")
+const GROVE_TEXTURE: Texture2D = preload("res://assets/objects/grove.png")
+const STANDING_STONE_TEXTURE: Texture2D = preload("res://assets/objects/standing_stone.png")
+const IRON_SITE_TEXTURE: Texture2D = preload("res://assets/objects/iron_site.png")
+const HILLFORT_TEXTURE: Texture2D = preload("res://assets/objects/hillfort.png")
+const GATHERER_TEXTURE: Texture2D = preload("res://assets/units/gatherer.png")
+const SPEARMAN_TEXTURE: Texture2D = preload("res://assets/units/spearman.png")
 
 var simulation: RtsSimulation
 var camera_offset := RtsSimulation.MAP_SIZE * 0.5
@@ -221,7 +230,7 @@ func _draw() -> void:
 
 func _draw_world() -> void:
 	var map_rect := Rect2(Vector2.ZERO, RtsSimulation.MAP_SIZE)
-	draw_rect(map_rect, Color("#18251f"), true)
+	draw_texture_rect(GROUND_TEXTURE, map_rect, true)
 	draw_rect(map_rect, Color("#8b9b80"), false, 8.0)
 	_draw_landscape_features()
 
@@ -241,13 +250,8 @@ func _draw_world() -> void:
 			control_color = simulation.faction_state[RtsSimulation.ENEMY]["color"]
 		elif resource["control"] == "contested":
 			control_color = Color("#fff1b0")
-		draw_arc(resource["position"], 33.0, 0.0, TAU, 32, control_color, 3.0)
-		draw_circle(resource["position"], 25.0, Color(0.12, 0.10, 0.05, 0.7))
-		draw_colored_polygon(PackedVector2Array([
-			resource["position"] + Vector2(0, -18),
-			resource["position"] + Vector2(17, 10),
-			resource["position"] + Vector2(-17, 10),
-		]), color)
+		draw_arc(resource["position"], 66.0, 0.0, TAU, 40, control_color, 3.0)
+		draw_texture_rect(IRON_SITE_TEXTURE, Rect2(resource["position"] - Vector2(60, 60), Vector2(120, 120)), false, Color.WHITE)
 		var resource_label: String = simulation.resource_definition["label"]
 		if resource["control"] == "contested":
 			resource_label += " / contested"
@@ -265,75 +269,76 @@ func _draw_world() -> void:
 func _draw_landscape_features() -> void:
 	var river_points: PackedVector2Array = simulation.scenario["river_points"]
 	draw_polyline(river_points, Color("#102b34"), 112.0, true)
-	draw_polyline(river_points, Color("#275864"), 86.0, true)
+	_draw_textured_polyline(river_points, WATER_TEXTURE, 84.0, Color(0.92, 0.98, 0.94, 1.0))
 	draw_polyline(river_points, Color(0.42, 0.68, 0.68, 0.45), 2.0, true)
 
 	for road in simulation.scenario["roads"]:
 		var road_points := PackedVector2Array(road)
-		draw_polyline(road_points, Color(0.38, 0.30, 0.20, 0.35), 22.0, true)
+		draw_polyline(road_points, Color(0.20, 0.15, 0.10, 0.45), 27.0, true)
+		_draw_textured_polyline(road_points, ROAD_TEXTURE, 18.0, Color(0.96, 0.90, 0.72, 1.0))
 		draw_polyline(road_points, Color(0.63, 0.52, 0.35, 0.28), 2.0, true)
 
 	for grove in simulation.scenario["groves"]:
 		var grove_position: Vector2 = grove["position"]
 		var grove_radius: float = grove["radius"]
-		draw_circle(grove_position, grove_radius, Color(0.06, 0.16, 0.12, 0.46))
-		for index in range(7):
-			var angle := float(index) * TAU / 7.0
-			var tree_position := grove_position + Vector2(cos(angle), sin(angle)) * grove_radius * 0.62
-			draw_line(tree_position + Vector2(0, 13), tree_position + Vector2(0, -10), Color("#4b6145"), 4.0)
-			draw_circle(tree_position + Vector2(0, -16), 12.0, Color("#304f3b"))
+		var grove_size := Vector2.ONE * grove_radius * 2.25
+		draw_texture_rect(GROVE_TEXTURE, Rect2(grove_position - grove_size * 0.5, grove_size), false, Color.WHITE)
 
 	for stone_position in simulation.scenario["standing_stones"]:
-		draw_colored_polygon(PackedVector2Array([
-			stone_position + Vector2(-10, 16),
-			stone_position + Vector2(-7, -18),
-			stone_position + Vector2(5, -26),
-			stone_position + Vector2(12, 15),
-		]), Color("#6d7467"))
-		draw_line(stone_position + Vector2(-3, -17), stone_position + Vector2(4, 8), Color(0.8, 0.82, 0.68, 0.34), 2.0)
+		draw_texture_rect(STANDING_STONE_TEXTURE, Rect2(stone_position - Vector2(48, 48), Vector2(96, 96)), false, Color.WHITE)
+
+
+func _draw_textured_polyline(points: PackedVector2Array, texture: Texture2D, width: float, modulate: Color) -> void:
+	var world_origin := get_viewport_rect().size * 0.5 - camera_offset * camera_zoom
+	for index in range(points.size() - 1):
+		var start: Vector2 = points[index]
+		var end: Vector2 = points[index + 1]
+		var segment := end - start
+		var segment_length := segment.length()
+		if segment_length <= 0.1:
+			continue
+		var midpoint := (start + end) * 0.5
+		draw_set_transform(world_origin + midpoint * camera_zoom, segment.angle(), Vector2.ONE * camera_zoom)
+		draw_texture_rect(texture, Rect2(Vector2(-segment_length * 0.5, -width * 0.5), Vector2(segment_length, width)), true, modulate)
+	draw_set_transform(world_origin, 0.0, Vector2.ONE * camera_zoom)
 
 
 func _draw_base(base: Dictionary) -> void:
 	var color: Color = simulation.faction_state[base["owner"]]["color"]
 	var accent: Color = simulation.faction_state[base["owner"]]["accent"]
 	var position: Vector2 = base["position"]
-	draw_circle(position, 66.0, Color(0.02, 0.03, 0.04, 0.65))
-	draw_rect(Rect2(position - Vector2(45, 45), Vector2(90, 90)), color.darkened(0.45), true)
-	draw_rect(Rect2(position - Vector2(36, 36), Vector2(72, 72)), color, true)
-	draw_rect(Rect2(position - Vector2(25, 25), Vector2(50, 50)), Color("#252c32"), true)
-	draw_line(position + Vector2(-17, 0), position + Vector2(17, 0), color, 5.0)
-	draw_line(position + Vector2(0, -17), position + Vector2(0, 17), color, 5.0)
+	draw_circle(position + Vector2(4, 8), 88.0, Color(0.02, 0.03, 0.04, 0.66))
+	var ownership_color := color
+	ownership_color.a = 0.82
+	draw_arc(position, 104.0, 0.0, TAU, 56, ownership_color, 5.0)
+	draw_texture_rect(HILLFORT_TEXTURE, Rect2(position - Vector2(96, 90), Vector2(192, 180)), false, Color.WHITE)
 
 	if selected_base_id == base["id"]:
-		draw_arc(position, 74.0, 0.0, TAU, 48, accent, 3.0)
+		draw_arc(position, 112.0, 0.0, TAU, 56, accent, 3.0)
 
-	_draw_health_bar(position + Vector2(-48, 58), 96.0, base["hp"], base["max_hp"])
-	draw_string(font, position + Vector2(-42, -76), "HILLFORT", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
+	_draw_health_bar(position + Vector2(-74, 98), 148.0, base["hp"], base["max_hp"])
+	draw_string(font, position + Vector2(-42, -108), "HILLFORT", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 	if not base["production_queue"].is_empty():
 		var queue_item: Dictionary = base["production_queue"][0]
 		var queue_label: String = simulation.unit_definitions[queue_item["kind"]]["label"]
-		draw_string(font, position + Vector2(-46, 92), "%s %.1fs" % [queue_label, queue_item["remaining"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, accent)
+		draw_string(font, position + Vector2(-58, 122), "%s %.1fs" % [queue_label, queue_item["remaining"]], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, accent)
 
 
 func _draw_unit(unit: Dictionary) -> void:
 	var color: Color = simulation.faction_state[unit["owner"]]["color"]
 	var position: Vector2 = unit["position"]
 	var radius := 13.0 if unit["kind"] == "worker" else 17.0
+	var unit_texture: Texture2D = GATHERER_TEXTURE if unit["kind"] == "worker" else SPEARMAN_TEXTURE
+	var sprite_size := Vector2(46, 52) if unit["kind"] == "worker" else Vector2(52, 58)
+
+	draw_circle(position + Vector2(3, 5), radius + 2.0, Color(0.02, 0.03, 0.04, 0.62))
+	var ownership_color := color
+	ownership_color.a = 0.85
+	draw_circle(position, radius + 3.0, ownership_color)
+	draw_texture_rect(unit_texture, Rect2(position - sprite_size * 0.5, sprite_size), false, Color.WHITE)
 
 	if selected_unit_ids.has(unit["id"]):
-		draw_arc(position, radius + 8.0, 0.0, TAU, 24, Color("#fff1b0"), 3.0)
-
-	draw_circle(position + Vector2(3, 4), radius, Color(0.02, 0.03, 0.04, 0.7))
-	if unit["kind"] == "worker":
-		draw_circle(position, radius, color)
-		draw_circle(position, radius * 0.42, Color("#25313a"))
-	else:
-		draw_colored_polygon(PackedVector2Array([
-			position + Vector2(0, -radius - 2),
-			position + Vector2(radius, radius),
-			position + Vector2(-radius, radius),
-		]), color)
-		draw_line(position, position + Vector2(0, -radius * 0.65), Color("#2a3338"), 3.0)
+		draw_arc(position, radius + 10.0, 0.0, TAU, 28, Color("#fff1b0"), 3.0)
 
 	_draw_health_bar(position + Vector2(-radius, radius + 7), radius * 2.0, unit["hp"], unit["max_hp"])
 

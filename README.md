@@ -39,7 +39,7 @@ Resource gathering is intentionally abstract: a gatherer works an iron site and 
 
 Open the project folder in **Godot 4.7.2 or newer** and press **Play**.
 
-The project currently has no external art or audio dependencies. The world, units, HUD, and map details are drawn by code so the rules can be tested before an asset pipeline is chosen.
+The project includes a first-pass art package under `assets/`. The artwork is intentionally provisional; ownership rings, health bars, labels, and other UI feedback remain drawn by code so the rules stay easy to test.
 
 ## Headless test
 
@@ -60,6 +60,7 @@ test automatically on every GitHub push and pull request.
 ~~~text
 project.godot              Godot project configuration
 scenes/main.tscn           Application entry scene
+assets/                    Provisional terrain, map, building, and unit art
 src/game_data.gd           Scenario, faction, unit, and resource definitions
 src/simulation.gd          Fixed-tick rules and game state
 src/main.gd                Rendering, camera, HUD, and input
