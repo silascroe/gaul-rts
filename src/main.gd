@@ -26,6 +26,7 @@ func _ready() -> void:
 	simulation.state_changed.connect(_on_state_changed)
 	simulation.match_ended.connect(_on_match_ended)
 	font = ThemeDB.fallback_font
+	_clamp_camera()
 	queue_redraw()
 
 
@@ -57,6 +58,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			_zoom_at(event.position, 1.0 / 1.12)
 
+	if event is InputEventMouseMotion and dragging:
+		drag_current = event.position
+		queue_redraw()
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
 			simulation.reset_match()
@@ -69,7 +74,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_set_status("Game paused." if simulation.paused else "Game resumed.")
 		elif event.keycode == KEY_B:
 			_queue_selected_production("soldier")
-		elif event.keycode == KEY_W and selected_base_id >= 0:
+		elif event.keycode == KEY_G and selected_base_id >= 0:
 			_queue_selected_production("worker")
 
 
@@ -86,8 +91,7 @@ func _update_camera(delta: float) -> void:
 
 	if direction != Vector2.ZERO:
 		camera_offset += direction.normalized() * camera_speed * delta / camera_zoom
-		camera_offset.x = clamp(camera_offset.x, 640.0 / camera_zoom, RtsSimulation.MAP_SIZE.x - 640.0 / camera_zoom)
-		camera_offset.y = clamp(camera_offset.y, 360.0 / camera_zoom, RtsSimulation.MAP_SIZE.y - 360.0 / camera_zoom)
+	_clamp_camera()
 
 
 func _zoom_at(screen_position: Vector2, factor: float) -> void:
@@ -95,6 +99,19 @@ func _zoom_at(screen_position: Vector2, factor: float) -> void:
 	camera_zoom = clamp(camera_zoom * factor, 0.55, 1.45)
 	var after := screen_to_world(screen_position)
 	camera_offset += before - after
+	_clamp_camera()
+
+
+func _clamp_camera() -> void:
+	var half_view := get_viewport_rect().size * 0.5 / camera_zoom
+	camera_offset.x = _clamp_camera_axis(camera_offset.x, half_view.x, RtsSimulation.MAP_SIZE.x)
+	camera_offset.y = _clamp_camera_axis(camera_offset.y, half_view.y, RtsSimulation.MAP_SIZE.y)
+
+
+func _clamp_camera_axis(value: float, half_view: float, map_extent: float) -> float:
+	if half_view * 2.0 >= map_extent:
+		return map_extent * 0.5
+	return clamp(value, half_view, map_extent - half_view)
 
 
 func _select_at_screen(screen_position: Vector2) -> void:
@@ -108,7 +125,7 @@ func _select_at_screen(screen_position: Vector2) -> void:
 		_set_status("Selected %s." % _unit_label(entity["id"]))
 	elif entity["kind"] == "base":
 		selected_base_id = entity["id"]
-		_set_status("Hillfort selected. Press B for a spearman or W for a gatherer.")
+		_set_status("Hillfort selected. Press B for a spearman or G for a gatherer.")
 
 
 func _select_box(screen_rect: Rect2) -> void:
@@ -368,7 +385,7 @@ func _draw_hud(viewport_size: Vector2) -> void:
 	draw_rect(help_rect, panel, true)
 	draw_rect(help_rect, border, false, 2.0)
 	draw_string(font, Vector2(32, viewport_size.y - 62), "LMB select / drag box   RMB move, extract, or attack", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d2ded7"))
-	draw_string(font, Vector2(32, viewport_size.y - 38), "WASD/arrows pan   wheel zoom   SPACE pause   B spearman   W gatherer", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#a6b5ad"))
+	draw_string(font, Vector2(32, viewport_size.y - 38), "WASD/arrows pan   wheel zoom   SPACE pause   B spearman   G gatherer", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#a6b5ad"))
 	_draw_selection_panel(viewport_size)
 	_draw_minimap(viewport_size)
 

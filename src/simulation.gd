@@ -47,6 +47,9 @@ func _process(delta: float) -> void:
 	while accumulator >= TICK_RATE:
 		_step(TICK_RATE)
 		accumulator -= TICK_RATE
+		if ended:
+			accumulator = 0.0
+			break
 
 	state_changed.emit()
 
@@ -391,11 +394,18 @@ func _run_basic_ai() -> void:
 		if unit["owner"] != ENEMY:
 			continue
 		if unit["kind"] == "worker":
-			if unit["order"] == "idle":
-				var resource = _nearest_available_resource(unit["position"])
+			var needs_resource := unit["order"] == "idle"
+			if unit["order"] == "gather":
+				var current_resource = get_resource_by_id(unit["gather_id"])
+				needs_resource = current_resource == null or not _resource_is_available_to_owner(current_resource, ENEMY)
+			if needs_resource:
+				var resource = _nearest_available_resource(unit["position"], ENEMY)
 				if resource != null:
 					unit["order"] = "gather"
 					unit["gather_id"] = resource["id"]
+				else:
+					unit["order"] = "idle"
+					unit["gather_id"] = -1
 		elif unit["kind"] == "soldier" and unit["order"] == "idle" and player_base != null:
 			unit["order"] = "attack"
 			unit["target_kind"] = "base"
@@ -410,11 +420,15 @@ func _get_target(target_kind: String, target_id: int):
 	return null
 
 
-func _nearest_available_resource(from_position: Vector2):
+func _resource_is_available_to_owner(resource: Dictionary, owner: int) -> bool:
+	return resource["amount"] > 0.0 and resource["gather_rates"].get(owner, 0.0) > 0.0
+
+
+func _nearest_available_resource(from_position: Vector2, owner: int):
 	var best = null
 	var best_distance := INF
 	for resource in resources:
-		if resource["amount"] <= 0.0:
+		if not _resource_is_available_to_owner(resource, owner):
 			continue
 		var distance: float = from_position.distance_to(resource["position"])
 		if distance < best_distance:

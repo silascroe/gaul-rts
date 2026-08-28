@@ -98,6 +98,47 @@ func _run() -> void:
 		quit(1)
 		return
 
+	var blocked_resource: Dictionary = simulation.resources[0]
+	var enemy_worker = _find_unit(simulation, SIMULATION_SCRIPT.ENEMY, "worker")
+	var blocking_soldier = _find_unit(simulation, SIMULATION_SCRIPT.PLAYER, "soldier")
+	if not _expect(enemy_worker != null and blocking_soldier != null, "AI reroute test units were not created"):
+		quit(1)
+		return
+	blocking_soldier["position"] = blocked_resource["position"]
+	simulation._update_resource_control()
+	if not _expect(blocked_resource["gather_rates"][SIMULATION_SCRIPT.ENEMY] == 0.0, "player control did not block enemy extraction for AI reroute test"):
+		quit(1)
+		return
+	enemy_worker["position"] = blocked_resource["position"]
+	enemy_worker["order"] = "gather"
+	enemy_worker["gather_id"] = blocked_resource["id"]
+	simulation._run_basic_ai()
+	if not _expect(enemy_worker["gather_id"] != blocked_resource["id"], "enemy worker stayed assigned to a blocked resource"):
+		quit(1)
+		return
+	var rerouted_resource = simulation.get_resource_by_id(enemy_worker["gather_id"])
+	if not _expect(rerouted_resource != null and rerouted_resource["gather_rates"][SIMULATION_SCRIPT.ENEMY] > 0.0, "enemy worker did not reroute to a viable resource"):
+		quit(1)
+		return
+
+	simulation.reset_match()
+	var atomic_player_soldier = _find_unit(simulation, SIMULATION_SCRIPT.PLAYER, "soldier")
+	var atomic_enemy_base: Dictionary = simulation.bases[1]
+	if not _expect(atomic_player_soldier != null, "atomic victory test soldier was not created"):
+		quit(1)
+		return
+	atomic_player_soldier["position"] = atomic_enemy_base["position"]
+	atomic_player_soldier["damage"] = atomic_enemy_base["hp"]
+	atomic_player_soldier["attack_timer"] = 0.0
+	simulation.order_attack([atomic_player_soldier["id"]], "base", atomic_enemy_base["id"])
+	simulation._process(SIMULATION_SCRIPT.TICK_RATE * 4.0)
+	if not _expect(simulation.ended and simulation.winner == SIMULATION_SCRIPT.PLAYER, "multi-tick frame did not end on the killing blow"):
+		quit(1)
+		return
+	if not _expect(is_equal_approx(simulation.elapsed, SIMULATION_SCRIPT.TICK_RATE), "simulation advanced extra ticks after the match ended"):
+		quit(1)
+		return
+
 	print("simulation smoke test passed")
 	quit()
 

@@ -5,6 +5,7 @@ extends SceneTree
 ## startup failures.
 
 const MAIN_SCENE := preload("res://scenes/main.tscn")
+const SIMULATION_SCRIPT := preload("res://src/simulation.gd")
 
 
 func _init() -> void:
@@ -36,8 +37,53 @@ func _run() -> void:
 	if not _expect(main.selected_base_id == player_base["id"], "player hillfort could not be selected"):
 		quit(1)
 		return
-	main._queue_selected_production("worker")
-	if not _expect(player_base["production_queue"].size() == 1, "selected hillfort did not accept production input"):
+
+	var pan_key := InputEventKey.new()
+	pan_key.keycode = KEY_W
+	pan_key.pressed = true
+	main._unhandled_input(pan_key)
+	if not _expect(player_base["production_queue"].is_empty(), "camera-up key queued a gatherer"):
+		quit(1)
+		return
+
+	var gatherer_key := InputEventKey.new()
+	gatherer_key.keycode = KEY_G
+	gatherer_key.pressed = true
+	main._unhandled_input(gatherer_key)
+	if not _expect(player_base["production_queue"].size() == 1, "gatherer production key did not queue a worker"):
+		quit(1)
+		return
+
+	main.camera_offset = Vector2(-1000.0, 9000.0)
+	main._zoom_at(main.get_viewport_rect().size * 0.5, 0.01)
+	var half_view := main.get_viewport_rect().size * 0.5 / main.camera_zoom
+	if not _expect(_camera_axis_is_valid(main.camera_offset.x, half_view.x, SIMULATION_SCRIPT.MAP_SIZE.x), "camera x escaped the map after zoom"):
+		quit(1)
+		return
+	if not _expect(_camera_axis_is_valid(main.camera_offset.y, half_view.y, SIMULATION_SCRIPT.MAP_SIZE.y), "camera y escaped the map after zoom"):
+		quit(1)
+		return
+	main.camera_zoom = 0.78
+	main.camera_offset = SIMULATION_SCRIPT.MAP_SIZE * 0.5
+	main._clamp_camera()
+
+	var drag_press := InputEventMouseButton.new()
+	drag_press.button_index = MOUSE_BUTTON_LEFT
+	drag_press.pressed = true
+	drag_press.position = Vector2(100.0, 100.0)
+	main._unhandled_input(drag_press)
+	var drag_motion := InputEventMouseMotion.new()
+	drag_motion.position = Vector2(180.0, 160.0)
+	main._unhandled_input(drag_motion)
+	if not _expect(main.dragging and main.drag_current == drag_motion.position, "drag marquee did not track mouse motion"):
+		quit(1)
+		return
+	var drag_release := InputEventMouseButton.new()
+	drag_release.button_index = MOUSE_BUTTON_LEFT
+	drag_release.pressed = false
+	drag_release.position = drag_motion.position
+	main._unhandled_input(drag_release)
+	if not _expect(not main.dragging, "drag selection did not finish on mouse release"):
 		quit(1)
 		return
 
@@ -56,6 +102,12 @@ func _run() -> void:
 
 	print("main scene smoke test passed")
 	quit()
+
+
+func _camera_axis_is_valid(value: float, half_view: float, map_extent: float) -> bool:
+	if half_view * 2.0 >= map_extent:
+		return is_equal_approx(value, map_extent * 0.5)
+	return value >= half_view - 0.01 and value <= map_extent - half_view + 0.01
 
 
 func _find_unit(simulation, owner: int, kind: String):

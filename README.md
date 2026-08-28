@@ -29,7 +29,7 @@ An old-school real-time strategy prototype set in an alternate Iron Age Gaul.
 | Mouse wheel | Zoom |
 | Space | Pause / resume |
 | B | Queue a spearman at the selected hillfort |
-| W | Queue a gatherer at the selected hillfort |
+| G | Queue a gatherer at the selected hillfort |
 | R | Restart the match |
 | Escape | Clear the current selection |
 
